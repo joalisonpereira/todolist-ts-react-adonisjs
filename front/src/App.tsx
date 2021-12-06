@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {ITodo} from "./interfaces";
 import TodoItem from "./TodoItem";
@@ -9,24 +9,28 @@ export default function App() {
 
   const [todos, setTodos] = useState<Array<ITodo>>([]);
 
-  useEffect(() => {
-    async function fetchTodos(){
-      const { data } = await api.get('https://jsonplaceholder.typicode.com/todos');
+  const fetchTodos = useCallback(async (): Promise<void> => {
+    const { data } = await api.get('/todos');
 
-      setTodos(data.map((item: any) => ({id: item.id, title: item.title})));
-    }
-
-    fetchTodos();
+    setTodos(data.map((item: any) => ({id: item.id, title: item.title})));
   },[]);
 
-  function onAdd(){
-    setTodos(state => [...state, {id: state[state.length - 1].id + 1, title: input}]);
+  useEffect(() => {
+    fetchTodos();
+  },[fetchTodos]);
 
+  async function onAdd(): Promise<void>{
+    await api.post('/todos', { title: input });
+    
     setInput('');
+
+    fetchTodos();
   }
 
-  function onRemove(id: number){
-    setTodos(state => state.filter(item => item.id !== id));
+  async function onRemove(id: number): Promise<void>{
+    await api.delete(`/todos/${id}`);
+
+    fetchTodos();
   }
 
   return (
